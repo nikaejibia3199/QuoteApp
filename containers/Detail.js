@@ -63,6 +63,15 @@ export default class NotificationScreen extends Component {
 		
 		Share.share(shareOptions)
     }
+
+    isJsonString = (str) => {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
 	
     _fetchQuotes = (category, typeOfQuote, page) => {
         const url = `${QUOTES_URL}type=${typeOfQuote}&term=${category}&page=${page}`;
@@ -74,8 +83,14 @@ export default class NotificationScreen extends Component {
 
         setTimeout(() => {
             fetch(url)
-            .then((response) => response.json())
+            .then((response) => {
+                return response.text()
+                    .then((text) => this.isJsonString(text) ? JSON.parse(text) : []);
+            })
             .then((responseJSON) => {
+                if (responseJSON.length === 0) {
+                    // No Load More
+                }
                 this.setState({
                     isFetching: false,
                     isError: false,
@@ -101,6 +116,10 @@ export default class NotificationScreen extends Component {
 
 
     _handleLoadMore = () => {
+        if(this.state.isFetching) {
+            return;
+        }
+
         this.setState({
             page: this.state.page + 1,
             isFetching: true,
